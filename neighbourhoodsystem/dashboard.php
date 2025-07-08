@@ -490,21 +490,42 @@ try {
                 padding: 20px 10px;
             }
         }
+        /* notification icon  */
+
+        .notification-btn {
+            background: none;
+            border: none;
+            font-size: 36px; /* Make the bell bigger */
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 5px;
+            line-height: 1;
+            }
+
+        .notification-btn:hover {
+            color: gold; /* Optional hover color */
+            }
+        
+
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
-            <div class="logo">🏘️ Neighbourhood Connect</div>
-            <div class="user-info">
-                <div class="user-avatar">
-                    <?php echo strtoupper(substr($user['full_name'], 0, 1)); ?>
-                </div>
-                <span>Welcome, <?php echo htmlspecialchars($user['full_name']); ?></span>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+    <div class="header-content">
+        <div class="logo">🏘️ Neighbourhood Connect</div>
+        <div class="user-info">
+            <!-- 🔔 Notification Button -->
+            <button class="notification-btn" onclick="window.location.href='notification.php'">🔔</button>
+
+            <div class="user-avatar">
+                <?php echo strtoupper(substr($user['full_name'], 0, 1)); ?>
             </div>
+            <span>Welcome, <?php echo htmlspecialchars($user['full_name']); ?></span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </div>
+</div>
+
 
     <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
 
