@@ -11,9 +11,9 @@ define('DB_PASS', '');
 // SMTP configuration for email sending
 define('SMTP_HOST', 'smtp.gmail.com'); // Change to your SMTP server
 define('SMTP_PORT', 587); // 587 for TLS, 465 for SSL
-define('SMTP_USERNAME', 'lagatcollins31@gmail.com'); // Your email
-define('SMTP_PASSWORD', 'roio gwrr imiw lgcg'); // Your app password (not regular password)
-define('SMTP_FROM_EMAIL', 'lagatcollins31@gmail.com'); // From email address
+define('SMTP_USERNAME', ''); // Your email
+define('SMTP_PASSWORD', ''); // Your app password (not regular password)
+define('SMTP_FROM_EMAIL', ''); // From email address
 define('SMTP_FROM_NAME', 'Neighbourhood Connect'); // From name
 
 // Session configuration
