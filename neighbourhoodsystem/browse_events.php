@@ -109,7 +109,7 @@ try {
     $eventsWithLocation = [];
 }
 ?>
-
+   
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,480 +119,7 @@ try {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            min-height: 100vh;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            transition: background 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .page-header {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .page-header h1 {
-            color: #333;
-            font-size: 2.5em;
-            margin-bottom: 15px;
-        }
-
-        .page-header p {
-            color: #666;
-            font-size: 1.1em;
-        }
-
-        .view-toggle {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .view-btn {
-            padding: 12px 24px;
-            border: 2px solid #4facfe;
-            background: white;
-            color: #4facfe;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .view-btn.active {
-            background: #4facfe;
-            color: white;
-        }
-
-        .view-btn:hover {
-            background: #4facfe;
-            color: white;
-        }
-
-        .content-container {
-            position: relative;
-            min-height: 500px;
-        }
-
-        .list-view {
-            display: block;
-        }
-
-        .map-view {
-            display: none;
-        }
-
-        .map-view.active {
-            display: block;
-        }
-
-        .list-view.active {
-            display: block;
-        }
-
-        .events-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-        }
-
-        .event-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            position: relative;
-        }
-
-        .event-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .event-card.highlighted {
-            border: 3px solid #4facfe;
-            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
-        }
-
-        .event-card h3 {
-            color: #333;
-            font-size: 1.5em;
-            margin-bottom: 15px;
-        }
-
-        .event-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .event-meta-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #666;
-        }
-
-        .event-meta-item .icon {
-            font-size: 1.2em;
-        }
-
-        .event-description {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .event-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.875rem;
-        }
-
-        .attendee-count {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .organizer-info {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .organizer-info small {
-            color: #666;
-        }
-
-        .location-info {
-            background: #e3f2fd;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .location-info:hover {
-            background: #bbdefb;
-        }
-
-        .location-info.clickable {
-            border: 1px solid #4facfe;
-        }
-
-        .no-events {
-            text-align: center;
-            color: #666;
-            font-size: 1.2em;
-            margin-top: 40px;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .create-event-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .create-event-btn:hover {
-            transform: scale(1.1);
-        }
-
-        /* Map View Styles */
-        .map-container {
-            position: relative;
-            height: 600px;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        #map {
-            height: 100%;
-            width: 100%;
-        }
-
-        .map-controls {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .control-panel {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            min-width: 200px;
-        }
-
-        .control-panel h4 {
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 1em;
-        }
-
-        .control-btn {
-            width: 100%;
-            padding: 8px 12px;
-            margin-bottom: 5px;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .control-btn:hover {
-            background: #f8f9fa;
-            border-color: #4facfe;
-        }
-
-        .legend {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .legend-marker {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            margin-right: 8px;
-            border: 2px solid white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        .upcoming-marker {
-            background: #28a745;
-        }
-
-        .my-event-marker {
-            background: #ffc107;
-        }
-
-        .legend-text {
-            font-size: 0.9em;
-            color: #555;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .events-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .event-card {
-                padding: 20px;
-            }
-
-            .view-toggle {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .map-controls {
-                position: static;
-                background: white;
-                border-radius: 10px;
-                padding: 15px;
-                margin-bottom: 20px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            }
-
-            .control-panel {
-                box-shadow: none;
-                padding: 0;
-            }
-
-            .map-container {
-                height: 400px;
-            }
-        }
-
-        /* Loading spinner */
-        .loading-spinner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #4facfe;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Event card location status */
-        .location-status {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: 600;
-        }
-
-        .location-available {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .location-unavailable {
-            background: #f8d7da;
-            color: #721c24;
-        }
-    </style>
+    <link rel="stylesheet" href="browse_events.css">
 </head>
 <body>
     <div class="header">
@@ -662,7 +189,10 @@ try {
                                         <span class="attendee-count">
                                             <span id="attendee-count-<?php echo $event['id']; ?>">
                                                 <?php echo $event['attendee_count']; ?>
-                                            </span> attending
+                                            </span> 
+                                            <span class="rsvp-status" id="rsvp-status-<?php echo $event['id']; ?>">
+                                                <?php echo $event['is_attending'] ? 'RSVP\'d' : 'attending'; ?>
+                                            </span>
                                             <?php if ($event['max_attendees']): ?>
                                                 / <?php echo $event['max_attendees']; ?> max
                                             <?php endif; ?>
@@ -685,6 +215,34 @@ try {
                                     </div>
                                 <?php endif; ?>
                                 
+                                <!-- RSVP Section -->
+                                <div class="rsvp-section">
+                                    <div class="rsvp-header">
+                                        <h4>👥 RSVP Status</h4>
+                                        <span class="rsvp-count">
+                                            <span id="rsvp-count-<?php echo $event['id']; ?>">
+                                                <?php echo $event['attendee_count']; ?>
+                                            </span> people attending
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="rsvp-attendees" id="rsvp-attendees-<?php echo $event['id']; ?>">
+                                        <!-- Attendees will be loaded here -->
+                                    </div>
+                                    
+                                    <div class="rsvp-actions">
+                                        <button class="btn btn-sm btn-outline" onclick="toggleAttendeesList(<?php echo $event['id']; ?>)">
+                                            <span id="toggle-text-<?php echo $event['id']; ?>">👁️ Show Attendees</span>
+                                        </button>
+                                        
+                                        <?php if ($event['user_id'] == $user['id']): ?>
+                                            <button class="btn btn-sm btn-info" onclick="manageRSVP(<?php echo $event['id']; ?>)">
+                                                📋 Manage RSVPs
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
                                 <div class="event-actions">
                                     <div class="attendee-count">
                                         <span id="attendee-display-<?php echo $event['id']; ?>">
@@ -706,16 +264,16 @@ try {
                                             <button class="btn btn-secondary" disabled>Your Event</button>
                                         <?php elseif ($event['is_attending']): ?>
                                             <button class="btn btn-danger" id="action-btn-<?php echo $event['id']; ?>" 
-                                                    onclick="toggleAttendance(<?php echo $event['id']; ?>, 'leave')">
-                                                Leave Event
+                                                    onclick="toggleRSVP(<?php echo $event['id']; ?>, 'leave')">
+                                                ✖️ Cancel RSVP
                                             </button>
                                         <?php else: ?>
                                             <?php if ($event['max_attendees'] && $event['attendee_count'] >= $event['max_attendees']): ?>
                                                 <button class="btn btn-secondary" disabled>Event Full</button>
                                             <?php else: ?>
                                                 <button class="btn btn-primary" id="action-btn-<?php echo $event['id']; ?>" 
-                                                        onclick="toggleAttendance(<?php echo $event['id']; ?>, 'join')">
-                                                    Join Event
+                                                        onclick="toggleRSVP(<?php echo $event['id']; ?>, 'join')">
+                                                    ✅ RSVP
                                                 </button>
                                             <?php endif; ?>
                                         <?php endif; ?>
@@ -747,11 +305,30 @@ try {
                             <div class="legend-marker my-event-marker"></div>
                             <div class="legend-text">My Events</div>
                         </div>
+                        <div class="legend-item">
+                            <div class="legend-marker rsvp-marker"></div>
+                            <div class="legend-text">RSVP'd Events</div>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="map-container">
                     <div id="map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RSVP Management Modal -->
+    <div id="rsvpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 RSVP Management</h3>
+                <button class="close-btn" onclick="closeRSVPModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="rsvpModalContent">
+                    <!-- Content will be loaded here -->
                 </div>
             </div>
         </div>
@@ -772,6 +349,7 @@ try {
         let eventsData = <?php echo json_encode($events); ?>;
         let eventsWithLocation = <?php echo json_encode($eventsWithLocation); ?>;
         let currentUserId = <?php echo $user['id']; ?>;
+        let attendeesCache = {};
 
         // Initialize map
         function initMap() {
@@ -793,16 +371,18 @@ try {
                 
                 if (isNaN(lat) || isNaN(lng)) return;
 
-                // Determine marker color
+                // Determine marker color based on user's relationship with event
                 let markerColor = '#28a745'; // Green for upcoming
                 if (event.user_id == currentUserId) {
                     markerColor = '#ffc107'; // Yellow for my events
+                } else if (event.is_attending) {
+                    markerColor = '#17a2b8'; // Blue for RSVP'd events
                 }
 
                 const marker = L.marker([lat, lng], {
                     icon: L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div style="background-color: ${markerColor}; width: 25px; height: 25px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">📅</div>`,
+                        html: `<div style="background-color: ${markerColor}; width: 25px; height: 25px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${event.is_attending ? '✅' : '📅'}</div>`,
                         iconSize: [25, 25],
                         iconAnchor: [12, 12]
                     })
@@ -830,14 +410,15 @@ try {
                     <p style="margin: 0 0 10px 0; color: #666;"><strong>By:</strong> ${event.organizer_name}</p>
                     <p style="margin: 0 0 10px 0; color: #666;"><strong>📅 Date:</strong> ${eventDate.toLocaleDateString()} at ${eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                     <p style="margin: 0 0 10px 0; color: #666;"><strong>📍 Location:</strong> ${event.location}</p>
-                    <p style="margin: 0 0 15px 0; color: #666;"><strong>👥 Attending:</strong> ${event.attendee_count}</p>
-                    <div style="display: flex; gap: 8px;">
-                        <button onclick="highlightEventCard(${event.id})" style="padding: 6px 12px; background: #17a2b8; color: white; border: none; border-radius: 4 px; cursor: pointer;">📋 View Details</button>
+                    <p style="margin: 0 0 10px 0; color: #666;"><strong>👥 RSVP'd:</strong> ${event.attendee_count} people</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                        <button onclick="highlightEventCard(${event.id})" style="padding: 6px 12px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer;">📋 View Details</button>
+                        <button onclick="showAttendeesFromMap(${event.id})" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">👥 Attendees</button>
                         ${isMyEvent ? 
                             '<button style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: not-allowed;" disabled>Your Event</button>' :
                             (isAttending ? 
-                                `<button onclick="toggleAttendanceFromMap(${event.id}, 'leave')" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Leave</button>` :
-                                `<button onclick="toggleAttendanceFromMap(${event.id}, 'join')" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Join</button>`
+                                `<button onclick="toggleRSVPFromMap(${event.id}, 'leave')" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">✖️ Cancel RSVP</button>` :
+                                `<button onclick="toggleRSVPFromMap(${event.id}, 'join')" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">✅ RSVP</button>`
                             )
                         }
                     </div>
@@ -845,125 +426,13 @@ try {
             `;
         }
 
-        // Switch between views
-        function switchView(view) {
-            const listView = document.getElementById('listView');
-            const mapView = document.getElementById('mapView');
-            const viewBtns = document.querySelectorAll('.view-btn');
-
-            viewBtns.forEach(btn => btn.classList.remove('active'));
-
-            if (view === 'list') {
-                listView.classList.add('active');
-                mapView.classList.remove('active');
-                currentView = 'list';
-                event.target.classList.add('active');
-            } else if (view === 'map') {
-                listView.classList.remove('active');
-                mapView.classList.add('active');
-                currentView = 'map';
-                event.target.classList.add('active');
-                
-                // Initialize map if not already done
-                if (!map) {
-                    setTimeout(initMap, 100);
-                } else {
-                    // Refresh map size
-                    setTimeout(() => {
-                        map.invalidateSize();
-                    }, 100);
-                }
-            }
-        }
-
-        // Show event on map
-        function showOnMap(eventId, lat, lng) {
-            switchView('map');
-            
-            setTimeout(() => {
-                if (map) {
-                    map.setView([lat, lng], 16);
-                    
-                    // Find and open the marker popup
-                    allMarkers.forEach(marker => {
-                        if (marker.eventId === eventId) {
-                            marker.openPopup();
-                        }
-                    });
-                    
-                    // Highlight the event card
-                    highlightEventCard(eventId);
-                }
-            }, 200);
-        }
-
-        // Highlight event card
-        function highlightEventCard(eventId) {
-            // Clear previous highlights
-            clearHighlight();
-            
-            // Highlight the specific card
-            const card = document.getElementById(`event-card-${eventId}`);
-            if (card) {
-                card.classList.add('highlighted');
-                
-                // If in list view, scroll to the card
-                if (currentView === 'list') {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        }
-
-        // Clear highlight
-        function clearHighlight() {
-            document.querySelectorAll('.event-card.highlighted').forEach(card => {
-                card.classList.remove('highlighted');
-            });
-        }
-
-        // Center map on user location
-        function centerOnUser() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        map.setView([lat, lng], 15);
-                        
-                        // Add user location marker
-                        L.marker([lat, lng], {
-                            icon: L.divIcon({
-                                className: 'user-location-icon',
-                                html: '<div style="background-color: #007bff; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">📍</div>',
-                                iconSize: [20, 20],
-                                iconAnchor: [10, 10]
-                            })
-                        }).addTo(map).bindPopup('Your Location').openPopup();
-                    },
-                    (error) => {
-                        alert('Unable to get your location. Please enable location services.');
-                    }
-                );
-            } else {
-                alert('Geolocation is not supported by this browser.');
-            }
-        }
-
-        // Fit all markers in view
-        function fitAllMarkers() {
-            if (allMarkers.length > 0) {
-                const group = new L.featureGroup(allMarkers);
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
-        }
-
-        // Toggle attendance
-        function toggleAttendance(eventId, action) {
+        // Toggle RSVP functionality
+        function toggleRSVP(eventId, action) {
             const button = document.getElementById(`action-btn-${eventId}`);
             const originalText = button.textContent;
             
             button.disabled = true;
-            button.textContent = action === 'join' ? 'Joining...' : 'Leaving...';
+            button.textContent = action === 'join' ? 'RSVPing...' : 'Cancelling...';
             
             fetch('browse_events.php', {
                 method: 'POST',
@@ -977,20 +446,25 @@ try {
                 if (data.success) {
                     // Update button state
                     if (action === 'join') {
-                        button.textContent = 'Leave Event';
+                        button.textContent = '✖️ Cancel RSVP';
                         button.className = 'btn btn-danger';
-                        button.onclick = () => toggleAttendance(eventId, 'leave');
+                        button.onclick = () => toggleRSVP(eventId, 'leave');
                         
-                        // Update attendee count
+                        // Update RSVP status
+                        updateRSVPStatus(eventId, true);
                         updateAttendeeCount(eventId, 1);
                     } else {
-                        button.textContent = 'Join Event';
+                        button.textContent = '✅ RSVP';
                         button.className = 'btn btn-primary';
-                        button.onclick = () => toggleAttendance(eventId, 'join');
+                        button.onclick = () => toggleRSVP(eventId, 'join');
                         
-                        // Update attendee count
+                        // Update RSVP status
+                        updateRSVPStatus(eventId, false);
                         updateAttendeeCount(eventId, -1);
                     }
+                    
+                    // Clear attendees cache for this event
+                    delete attendeesCache[eventId];
                     
                     // Show success message
                     showNotification(data.message, 'success');
@@ -1009,9 +483,9 @@ try {
             });
         }
 
-        // Toggle attendance from map popup
-        function toggleAttendanceFromMap(eventId, action) {
-            toggleAttendance(eventId, action);
+        // Toggle RSVP from map popup
+        function toggleRSVPFromMap(eventId, action) {
+            toggleRSVP(eventId, action);
             
             // Update popup content after a short delay
             setTimeout(() => {
@@ -1031,10 +505,19 @@ try {
             }, 1000);
         }
 
+        // Update RSVP status display
+        function updateRSVPStatus(eventId, isRSVPd) {
+            const statusElement = document.getElementById(`rsvp-status-${eventId}`);
+            if (statusElement) {
+                statusElement.textContent = isRSVPd ? 'RSVP\'d' : 'attending';
+            }
+        }
+
         // Update attendee count display
         function updateAttendeeCount(eventId, change) {
             const countElement = document.getElementById(`attendee-count-${eventId}`);
             const displayElement = document.getElementById(`attendee-display-${eventId}`);
+            const rsvpCountElement = document.getElementById(`rsvp-count-${eventId}`);
             
             if (countElement) {
                 const currentCount = parseInt(countElement.textContent);
@@ -1044,70 +527,509 @@ try {
                 if (displayElement) {
                     displayElement.textContent = newCount;
                 }
+                
+                if (rsvpCountElement) {
+                    rsvpCountElement.textContent = newCount;
+                }
             }
+        }
+
+        // Toggle attendees list visibility
+        function toggleAttendeesList(eventId) {
+            const attendeesDiv = document.getElementById(`rsvp-attendees-${eventId}`);
+            const toggleText = document.getElementById(`toggle-text-${eventId}`);
+            
+            if (attendeesDiv.style.display === 'none' || attendeesDiv.style.display === '') {
+                loadAttendees(eventId);
+                attendeesDiv.style.display = 'block';
+                toggleText.textContent = '👁️ Hide Attendees';
+            } else {
+                attendeesDiv.style.display = 'none';
+                toggleText.textContent = '👁️ Show Attendees';
+            }
+        }
+
+        // Load attendees for an event
+        function loadAttendees(eventId) {
+            if (attendeesCache[eventId]) {
+                displayAttendees(eventId, attendeesCache[eventId]);
+                return;
+            }
+            
+            const attendeesDiv = document.getElementById(`rsvp-attendees-${eventId}`);
+            attendeesDiv.innerHTML = '<p>Loading attendees...</p>';
+            
+            fetch('get_attendees.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `event_id=${eventId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    attendeesCache[eventId] = data.attendees;
+                    displayAttendees(eventId, data.attendees);
+                } else {
+                    attendeesDiv.innerHTML = '<p>Error loading attendees</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                attendeesDiv.innerHTML = '<p>Error loading attendees</p>';
+            });
+        }
+
+        // Display attendees list
+        function displayAttendees(eventId, attendees) {
+            const attendeesDiv = document.getElementById(`rsvp-attendees-${eventId}`);
+            
+            if (attendees.length === 0) {
+                attendeesDiv.innerHTML = '<p>No attendees yet</p>';
+                return;
+            }
+            
+            let html = '<div class="attendees-list">';
+            attendees.forEach(attendee => {
+                const isCurrentUser = attendee.user_id == currentUserId;
+                html += `
+                    <div class="attendee-item ${isCurrentUser ? 'current-user' : ''}">
+                        <div class="attendee-avatar">
+                            ${attendee.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="attendee-info">
+                            <div class="attendee-name">
+                                ${attendee.name} ${isCurrentUser ? '(You)' : ''}
+                            </div>
+                            <div class="attendee-rsvp-date">
+                                RSVP'd on ${new Date(attendee.created_at).toLocaleDateString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            attendeesDiv.innerHTML = html;
+        }
+
+        // Show attendees from map
+        function showAttendeesFromMap(eventId) {
+            // Switch to list view and show attendees
+            switchView('list');
+            setTimeout(() => {
+                const card = document.getElementById(`event-card-${eventId}`);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Auto-expand attendees list
+                    setTimeout(() => {
+                        const attendeesDiv = document.getElementById(`rsvp-attendees-${eventId}`);
+                        if (attendeesDiv.style.display === 'none' || attendeesDiv.style.display === '') {
+                            toggleAttendeesList(eventId);
+                        }
+                    }, 500);
+                }
+            }, 200);
+        }
+
+        // Manage RSVP modal for event organizers
+        function manageRSVP(eventId) {
+            const modal = document.getElementById('rsvpModal');
+            const modalContent = document.getElementById('rsvpModalContent');
+            
+            modalContent.innerHTML = '<p>Loading RSVP data...</p>';
+            modal.style.display = 'block';
+            
+            fetch('manage_rsvp.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `event_id=${eventId}&action=get_full_data`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayRSVPManagement(data.event, data.attendees);
+                } else {
+                    modalContent.innerHTML = '<p>Error loading RSVP data</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalContent.innerHTML = '<p>Error loading RSVP data</p>';
+            });
+        }
+
+        // Display RSVP management interface
+        function displayRSVPManagement(event, attendees) {
+            const modalContent = document.getElementById('rsvpModalContent');
+            
+            let html = `
+                <div class="rsvp-management">
+                    <h4>${event.title}</h4>
+                    <p><strong>Date:</strong> ${new Date(event.event_date).toLocaleDateString()}</p>
+                    <p><strong>Total RSVPs:</strong> ${attendees.length}</p>
+                    ${event.max_attendees ? `<p><strong>Capacity:</strong> ${attendees.length}/${event.max_attendees}</p>` : ''}
+                    
+                    <div class="rsvp-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">${attendees.length}</div>
+                            <div class="stat-label">Total Attendees</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${attendees.filter(a => new Date(a.created_at) >= new Date(Date.now() - 24*60*60*1000)).length}</div>
+                            <div class="stat-label">New (24h)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${event.max_attendees ? Math.max(0, event.max_attendees - attendees.length) : '∞'}</div>
+                            <div class="stat-label">Spots Left</div>
+                        </div>
+                    </div>
+                    
+                    <div class="attendees-full-list">
+                        <h5>All Attendees:</h5>
+            `;
+            
+            if (attendees.length > 0) {
+                attendees.forEach(attendee => {
+                    html += `
+                        <div class="attendee-item-full">
+                            <div class="attendee-avatar">
+                                ${attendee.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="attendee-info">
+                                <div class="attendee-name">${attendee.name}</div>
+                                <div class="attendee-email">${attendee.email || 'No email'}</div>
+                                <div class="attendee-rsvp-date">
+                                    RSVP'd: ${new Date(attendee.created_at).toLocaleDateString()} at ${new Date(attendee.created_at).toLocaleTimeString()}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p>No attendees yet</p>';
+            }
+            
+            html += `
+                    </div>
+                    
+                    <div class="rsvp-actions">
+                        <button class="btn btn-primary" onclick="exportAttendees(${event.id})">📧 Export List</button>
+                        <button class="btn btn-secondary" onclick="closeRSVPModal()">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            modalContent.innerHTML = html;
+        }
+
+        // Export attendees list
+        function exportAttendees(eventId) {
+            const attendees = attendeesCache[eventId] || [];
+            if (attendees.length === 0) {
+                showNotification('No attendees to export', 'error');
+                return;
+            }
+            
+            let csvContent = "Name,Email,RSVP Date\n";
+            attendees.forEach(attendee => {
+                csvContent += `"${attendee.name}","${attendee.email || 'N/A'}","${new Date(attendee.created_at).toLocaleDateString()}"\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `event_${eventId}_attendees.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('Attendees list exported successfully!', 'success');
+        }
+
+        // Close RSVP modal
+        function closeRSVPModal() {
+            const modal = document.getElementById('rsvpModal');
+            modal.style.display = 'none';
         }
 
         // Show notification
         function showNotification(message, type) {
             const notification = document.createElement('div');
-            notification.className = `alert alert-${type === 'success' ? 'success' : 'error'}`;
+            notification.className = `notification ${type}`;
             notification.textContent = message;
-            notification.style.position = 'fixed';
-            notification.style.top = '20px';
-            notification.style.right = '20px';
-            notification.style.zIndex = '9999';
-            notification.style.maxWidth = '300px';
-            notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 5px;
+                color: white;
+                font-weight: bold;
+                z-index: 10000;
+                background-color: ${type === 'success' ? '#28a745' : '#dc3545'};
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease-out;
+            `;
             
             document.body.appendChild(notification);
             
             setTimeout(() => {
-                notification.remove();
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
             }, 3000);
         }
 
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up view toggle buttons
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const view = this.textContent.includes('List') ? 'list' : 'map';
-                    switchView(view);
-                });
-            });
+        // View switching functionality
+        function switchView(view) {
+            const listView = document.getElementById('listView');
+            const mapView = document.getElementById('mapView');
+            const listBtn = document.querySelector('.view-btn[onclick="switchView(\'list\')"]');
+            const mapBtn = document.querySelector('.view-btn[onclick="switchView(\'map\')"]');
             
-            // Initialize map if starting in map view
-            if (currentView === 'map') {
-                setTimeout(initMap, 100);
-            }
-        });
-
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', function(event) {
-            if (event.state && event.state.view) {
-                switchView(event.state.view);
-            }
-        });
-
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            if (event.ctrlKey || event.metaKey) {
-                switch(event.key) {
-                    case '1':
-                        event.preventDefault();
-                        switchView('list');
-                        break;
-                    case '2':
-                        event.preventDefault();
-                        switchView('map');
-                        break;
-                    case 'n':
-                        event.preventDefault();
-                        window.location.href = 'create_events.php';
-                        break;
+            currentView = view;
+            
+            if (view === 'list') {
+                listView.classList.add('active');
+                mapView.classList.remove('active');
+                listBtn.classList.add('active');
+                mapBtn.classList.remove('active');
+            } else {
+                listView.classList.remove('active');
+                mapView.classList.add('active');
+                listBtn.classList.remove('active');
+                mapBtn.classList.add('active');
+                
+                // Initialize map if not already done
+                if (!map) {
+                    setTimeout(initMap, 100);
+                } else {
+                    // Resize map to ensure proper display
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 100);
                 }
             }
+        }
+
+        // Highlight event card from map
+        function highlightEventCard(eventId) {
+            // Switch to list view
+            switchView('list');
+            
+            // Scroll to and highlight the event card
+            setTimeout(() => {
+                const card = document.getElementById(`event-card-${eventId}`);
+                if (card) {
+                    // Remove previous highlights
+                    document.querySelectorAll('.event-card.highlighted').forEach(el => {
+                        el.classList.remove('highlighted');
+                    });
+                    
+                    // Add highlight to current card
+                    card.classList.add('highlighted');
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Remove highlight after 3 seconds
+                    setTimeout(() => {
+                        card.classList.remove('highlighted');
+                    }, 3000);
+                }
+            }, 200);
+        }
+
+        // Show event on map
+        function showOnMap(eventId, lat, lng) {
+            // Switch to map view
+            switchView('map');
+            
+            // Wait for map to be ready and center on the event
+            setTimeout(() => {
+                if (map) {
+                    map.setView([lat, lng], 16);
+                    
+                    // Find and open popup for this event
+                    allMarkers.forEach(marker => {
+                        if (marker.eventId === eventId) {
+                            marker.openPopup();
+                        }
+                    });
+                }
+            }, 200);
+        }
+
+        // Map control functions
+        function centerOnUser() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        map.setView([lat, lng], 15);
+                        
+                        // Add user location marker
+                        const userMarker = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                className: 'user-location-marker',
+                                html: '<div style="background-color: #007bff; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map);
+                        
+                        userMarker.bindPopup('📍 Your Location').openPopup();
+                        
+                        // Remove user marker after 5 seconds
+                        setTimeout(() => {
+                            map.removeLayer(userMarker);
+                        }, 5000);
+                    },
+                    error => {
+                        showNotification('Unable to get your location', 'error');
+                    }
+                );
+            } else {
+                showNotification('Geolocation is not supported by this browser', 'error');
+            }
+        }
+
+        function fitAllMarkers() {
+            if (allMarkers.length > 0) {
+                const group = new L.featureGroup(allMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            } else {
+                showNotification('No events with locations to display', 'error');
+            }
+        }
+
+        function clearHighlight() {
+            // Close all popups
+            map.closePopup();
+            
+            // Remove highlights from cards
+            document.querySelectorAll('.event-card.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+            
+            showNotification('Highlights cleared', 'success');
+        }
+
+        // Modal click outside to close
+        window.onclick = function(event) {
+            const modal = document.getElementById('rsvpModal');
+            if (event.target === modal) {
+                closeRSVPModal();
+            }
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add CSS animations
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+                
+                .event-card.highlighted {
+                    border: 2px solid #007bff;
+                    box-shadow: 0 0 15px rgba(0, 123, 255, 0.3);
+                    transform: scale(1.02);
+                    transition: all 0.3s ease;
+                }
+                
+                .list-view, .map-view {
+                    display: none;
+                }
+                
+                .list-view.active, .map-view.active {
+                    display: block;
+                }
+                
+                .view-btn {
+                    padding: 10px 20px;
+                    margin: 0 5px;
+                    border: 2px solid #007bff;
+                    background: white;
+                    color: #007bff;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                
+                .view-btn.active {
+                    background: #007bff;
+                    color: white;
+                }
+                
+                .view-btn:hover {
+                    background: #007bff;
+                    color: white;
+                }
+                
+                .modal {
+                    display: none;
+                    position: fixed;
+                    z-index: 1000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.5);
+                }
+                
+                .modal-content {
+                    background-color: #fefefe;
+                    margin: 5% auto;
+                    padding: 0;
+                    border: none;
+                    border-radius: 10px;
+                    width: 90%;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                
+                .modal-header {
+                    padding: 20px;
+                    border-bottom: 1px solid #eee;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .modal-body {
+                    padding: 20px;
+                }
+                
+                .close-btn {
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #999;
+                }
+                
+                .close-btn:hover {
+                    color: #333;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Initialize with list view
+            switchView('list');
         });
     </script>
-</body>
-</html>
