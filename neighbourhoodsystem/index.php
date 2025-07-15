@@ -156,6 +156,15 @@
             box-shadow: 0 10px 25px rgba(108, 117, 125, 0.4);
         }
 
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+        }
+
         .form-switch {
             text-align: center;
             margin-top: 30px;
@@ -169,6 +178,22 @@
         }
 
         .form-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            color: #4facfe;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .forgot-password a:hover {
             text-decoration: underline;
         }
 
@@ -343,6 +368,10 @@
                         <input type="password" id="loginPassword" name="password" required>
                     </div>
 
+                    <div class="forgot-password">
+                        <a href="#" onclick="showForgotPasswordForm()">Forgot Password?</a>
+                    </div>
+
                     <button type="submit" class="btn">Sign In</button>
                 </form>
 
@@ -405,6 +434,72 @@
                 </div>
             </div>
 
+            <!-- Forgot Password Form -->
+            <div class="form-container" id="forgotPasswordForm">
+                <div class="form-header">
+                    <h2>Reset Password</h2>
+                    <p>Enter your email address to receive a reset code</p>
+                </div>
+
+                <div class="error-message" id="forgotPasswordError"></div>
+                <div class="success-message" id="forgotPasswordSuccess"></div>
+
+                <form id="forgotPasswordFormElement">
+                    <div class="form-group">
+                        <label for="forgotPasswordEmail">Email Address</label>
+                        <input type="email" id="forgotPasswordEmail" name="email" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger">Send Reset Code</button>
+                    <button type="button" class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                </form>
+            </div>
+
+            <!-- Reset Password Form -->
+            <div class="form-container" id="resetPasswordForm">
+                <div class="form-header">
+                    <h2>Reset Your Password</h2>
+                    <p>Enter the reset code and your new password</p>
+                </div>
+
+                <div class="error-message" id="resetPasswordError"></div>
+                <div class="success-message" id="resetPasswordSuccess"></div>
+
+                <form id="resetPasswordFormElement">
+                    <div class="form-group">
+                        <label>Enter the 6-digit reset code:</label>
+                        <div class="otp-container">
+                            <input type="text" class="otp-input reset-otp" maxlength="1" data-index="0">
+                            <input type="text" class="otp-input reset-otp" maxlength="1" data-index="1">
+                            <input type="text" class="otp-input reset-otp" maxlength="1" data-index="2">
+                            <input type="text" class="otp-input reset-otp" maxlength="1" data-index="3">
+                            <input type="text" class="otp-input reset-otp" maxlength="1" data-index="4">
+                            <input type="text" class="otp-input reset-otp" maxlength="1" data-index="5">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resetNewPassword">New Password</label>
+                        <input type="password" id="resetNewPassword" name="new_password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resetConfirmPassword">Confirm New Password</label>
+                        <input type="password" id="resetConfirmPassword" name="confirm_password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger">Reset Password</button>
+                    <button type="button" class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                </form>
+
+                <div class="form-switch">
+                    <div class="resend-timer">
+                        <span id="resetResendTimer">Resend code in <span id="resetCountdown">60</span> seconds</span>
+                        <a href="#" class="resend-link disabled" id="resetResendLink" onclick="resendResetCode()">Resend Code</a>
+                    </div>
+                </div>
+            </div>
+
             <!-- OTP Verification Form -->
             <div class="form-container" id="otpForm">
                 <div class="form-header">
@@ -420,12 +515,12 @@
                     <div class="form-group">
                         <label>Enter the 6-digit code sent to your email:</label>
                         <div class="otp-container">
-                            <input type="text" class="otp-input" maxlength="1" data-index="0">
-                            <input type="text" class="otp-input" maxlength="1" data-index="1">
-                            <input type="text" class="otp-input" maxlength="1" data-index="2">
-                            <input type="text" class="otp-input" maxlength="1" data-index="3">
-                            <input type="text" class="otp-input" maxlength="1" data-index="4">
-                            <input type="text" class="otp-input" maxlength="1" data-index="5">
+                            <input type="text" class="otp-input verify-otp" maxlength="1" data-index="0">
+                            <input type="text" class="otp-input verify-otp" maxlength="1" data-index="1">
+                            <input type="text" class="otp-input verify-otp" maxlength="1" data-index="2">
+                            <input type="text" class="otp-input verify-otp" maxlength="1" data-index="3">
+                            <input type="text" class="otp-input verify-otp" maxlength="1" data-index="4">
+                            <input type="text" class="otp-input verify-otp" maxlength="1" data-index="5">
                         </div>
                     </div>
 
@@ -444,50 +539,90 @@
     </div>
 
     <script>
-        let currentEmail = '';
-        let resendCountdown = 60;
-        let resendTimer = null;
+    let currentEmail = '';
+    let resendCountdown = 60;
+    let resendTimer = null;
+    let resetResendCountdown = 60;
+    let resetResendTimer = null;
 
-        // Form switching
-        function showLoginForm() {
-            document.getElementById('loginForm').classList.add('active');
-            document.getElementById('registerForm').classList.remove('active');
-            document.getElementById('otpForm').classList.remove('active');
-            clearMessages();
-        }
+    // Form switching functions
+    function showLoginForm() {
+        document.getElementById('loginForm').classList.add('active');
+        document.getElementById('registerForm').classList.remove('active');
+        document.getElementById('otpForm').classList.remove('active');
+        document.getElementById('forgotPasswordForm').classList.remove('active');
+        document.getElementById('resetPasswordForm').classList.remove('active');
+        clearMessages();
+    }
 
-        function showRegisterForm() {
-            document.getElementById('registerForm').classList.add('active');
-            document.getElementById('loginForm').classList.remove('active');
-            document.getElementById('otpForm').classList.remove('active');
-            clearMessages();
-        }
+    function showRegisterForm() {
+        document.getElementById('registerForm').classList.add('active');
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('otpForm').classList.remove('active');
+        document.getElementById('forgotPasswordForm').classList.remove('active');
+        document.getElementById('resetPasswordForm').classList.remove('active');
+        clearMessages();
+    }
 
-        function showOTPForm(email) {
-            document.getElementById('otpForm').classList.add('active');
-            document.getElementById('loginForm').classList.remove('active');
-            document.getElementById('registerForm').classList.remove('active');
-            currentEmail = email;
-            clearMessages();
-            clearOTPInputs();
-            startResendTimer();
-        }
+    function showForgotPasswordForm() {
+        document.getElementById('forgotPasswordForm').classList.add('active');
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('registerForm').classList.remove('active');
+        document.getElementById('otpForm').classList.remove('active');
+        document.getElementById('resetPasswordForm').classList.remove('active');
+        clearMessages();
+    }
 
-        function clearMessages() {
-            document.querySelectorAll('.error-message, .success-message, .info-message').forEach(el => {
-                el.style.display = 'none';
-            });
-        }
+    function showResetPasswordForm(email) {
+        document.getElementById('resetPasswordForm').classList.add('active');
+        document.getElementById('forgotPasswordForm').classList.remove('active');
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('registerForm').classList.remove('active');
+        document.getElementById('otpForm').classList.remove('active');
+        currentEmail = email;
+        clearMessages();
+        clearResetOTPInputs();
+        startResetResendTimer();
+    }
 
-        function clearOTPInputs() {
-            document.querySelectorAll('.otp-input').forEach(input => {
-                input.value = '';
-            });
-            document.querySelector('.otp-input').focus();
-        }
+    function showOTPForm(email) {
+        document.getElementById('otpForm').classList.add('active');
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('registerForm').classList.remove('active');
+        document.getElementById('forgotPasswordForm').classList.remove('active');
+        document.getElementById('resetPasswordForm').classList.remove('active');
+        currentEmail = email;
+        clearMessages();
+        clearOTPInputs();
+        startResendTimer();
+    }
 
-        function showMessage(elementId, message, isSuccess = false) {
-            const element = document.getElementById(elementId);
+    // Utility functions
+    function clearMessages() {
+        document.querySelectorAll('.error-message, .success-message, .info-message').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+
+    function clearOTPInputs() {
+        document.querySelectorAll('.verify-otp').forEach(input => {
+            input.value = '';
+        });
+        const firstInput = document.querySelector('.verify-otp');
+        if (firstInput) firstInput.focus();
+    }
+
+    function clearResetOTPInputs() {
+        document.querySelectorAll('.reset-otp').forEach(input => {
+            input.value = '';
+        });
+        const firstInput = document.querySelector('.reset-otp');
+        if (firstInput) firstInput.focus();
+    }
+
+    function showMessage(elementId, message, isSuccess = false) {
+        const element = document.getElementById(elementId);
+        if (element) {
             element.textContent = message;
             element.style.display = 'block';
             
@@ -497,13 +632,15 @@
                 }, 3000);
             }
         }
+    }
 
-        function startResendTimer() {
-            resendCountdown = 60;
-            const timerElement = document.getElementById('resendTimer');
-            const linkElement = document.getElementById('resendLink');
-            const countdownElement = document.getElementById('countdown');
-            
+    function startResendTimer() {
+        resendCountdown = 60;
+        const timerElement = document.getElementById('resendTimer');
+        const linkElement = document.getElementById('resendLink');
+        const countdownElement = document.getElementById('countdown');
+        
+        if (linkElement && timerElement && countdownElement) {
             linkElement.classList.add('disabled');
             timerElement.style.display = 'inline';
             linkElement.style.display = 'none';
@@ -520,221 +657,384 @@
                 }
             }, 1000);
         }
+    }
 
-        // OTP Input handling
-        document.addEventListener('DOMContentLoaded', function() {
-            const otpInputs = document.querySelectorAll('.otp-input');
+    function startResetResendTimer() {
+        resetResendCountdown = 60;
+        const timerElement = document.getElementById('resetResendTimer');
+        const linkElement = document.getElementById('resetResendLink');
+        const countdownElement = document.getElementById('resetCountdown');
+        
+        if (linkElement && timerElement && countdownElement) {
+            linkElement.classList.add('disabled');
+            timerElement.style.display = 'inline';
+            linkElement.style.display = 'none';
             
-            otpInputs.forEach((input, index) => {
-                input.addEventListener('input', function(e) {
-                    // Only allow numbers
-                    this.value = this.value.replace(/[^0-9]/g, '');
+            resetResendTimer = setInterval(() => {
+                resetResendCountdown--;
+                countdownElement.textContent = resetResendCountdown;
+                
+                if (resetResendCountdown <= 0) {
+                    clearInterval(resetResendTimer);
+                    timerElement.style.display = 'none';
+                    linkElement.style.display = 'inline';
+                    linkElement.classList.remove('disabled');
+                }
+            }, 1000);
+        }
+    }
+
+    function getOTPValue(className) {
+        return Array.from(document.querySelectorAll(className)).map(input => input.value).join('');
+    }
+
+    // OTP Input handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const otpInputs = document.querySelectorAll('.otp-input');
+        
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', function(e) {
+                // Only allow numbers
+                this.value = this.value.replace(/[^0-9]/g, '');
+                
+                if (e.target.value.length === 1) {
+                    const siblingInputs = this.classList.contains('verify-otp') ? 
+                        document.querySelectorAll('.verify-otp') : 
+                        document.querySelectorAll('.reset-otp');
                     
-                    if (e.target.value.length === 1) {
-                        if (index < otpInputs.length - 1) {
-                            otpInputs[index + 1].focus();
-                        }
+                    const currentIndex = parseInt(this.getAttribute('data-index'));
+                    if (currentIndex < siblingInputs.length - 1) {
+                        siblingInputs[currentIndex + 1].focus();
                     }
-                });
-                
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Backspace' && e.target.value === '') {
-                        if (index > 0) {
-                            otpInputs[index - 1].focus();
-                        }
+                }
+            });
+            
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && e.target.value === '') {
+                    const siblingInputs = this.classList.contains('verify-otp') ? 
+                        document.querySelectorAll('.verify-otp') : 
+                        document.querySelectorAll('.reset-otp');
+                    
+                    const currentIndex = parseInt(this.getAttribute('data-index'));
+                    if (currentIndex > 0) {
+                        siblingInputs[currentIndex - 1].focus();
                     }
-                });
-                
-                input.addEventListener('paste', function(e) {
-                    e.preventDefault();
-                    const paste = e.clipboardData.getData('text');
-                    if (paste.length === 6 && /^\d{6}$/.test(paste)) {
-                        otpInputs.forEach((input, i) => {
-                            input.value = paste[i] || '';
-                        });
-                        otpInputs[5].focus();
-                    }
-                });
+                }
+            });
+            
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const paste = e.clipboardData.getData('text');
+                if (paste.length === 6 && /^\d{6}$/.test(paste)) {
+                    const siblingInputs = this.classList.contains('verify-otp') ? 
+                        document.querySelectorAll('.verify-otp') : 
+                        document.querySelectorAll('.reset-otp');
+                    
+                    siblingInputs.forEach((input, i) => {
+                        input.value = paste[i] || '';
+                    });
+                    if (siblingInputs[5]) siblingInputs[5].focus();
+                }
             });
         });
+    });
 
-        function getOTPValue() {
-            return Array.from(document.querySelectorAll('.otp-input')).map(input => input.value).join('');
-        }
-
+    // Form submission handlers
+    document.addEventListener('DOMContentLoaded', function() {
         // Handle login form submission
-        document.getElementById('loginFormElement').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const form = e.target;
-            const formData = new FormData(form);
-            formData.append('action', 'login');
-            
-            const container = document.querySelector('.auth-forms');
-            container.classList.add('loading');
-            clearMessages();
-            
-            try {
-                const response = await fetch('auth_handler.php', {
-                    method: 'POST',
-                    body: formData
-                });
+        const loginForm = document.getElementById('loginFormElement');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
                 
-                const data = await response.json();
+                const form = e.target;
+                const formData = new FormData(form);
+                formData.append('action', 'login');
                 
-                if (data.success) {
-                    showMessage('loginSuccess', data.message, true);
-                    setTimeout(() => {
-                        window.location.href = data.redirect;
-                    }, 1000);
-                } else if (data.show_otp) {
-                    showMessage('loginError', data.error);
-                    setTimeout(() => {
-                        showOTPForm(data.email);
-                    }, 2000);
-                } else {
-                    showMessage('loginError', data.error || 'Login failed');
+                const container = document.querySelector('.auth-forms');
+                if (container) container.classList.add('loading');
+                clearMessages();
+                
+                try {
+                    const response = await fetch('auth_handler.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showMessage('loginSuccess', data.message, true);
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 1000);
+                    } else if (data.show_otp) {
+                        showMessage('loginError', data.error);
+                        setTimeout(() => {
+                            showOTPForm(data.email);
+                        }, 2000);
+                    } else {
+                        showMessage('loginError', data.error || 'Login failed');
+                    }
+                } catch (error) {
+                    showMessage('loginError', 'Network error. Please try again.');
+                } finally {
+                    if (container) container.classList.remove('loading');
                 }
-            } catch (error) {
-                showMessage('loginError', 'Network error. Please try again.');
-            } finally {
-                container.classList.remove('loading');
-            }
-        });
+            });
+        }
 
         // Handle registration form submission
-        document.getElementById('registerFormElement').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const form = e.target;
-            const formData = new FormData(form);
-            formData.append('action', 'register');
-            
-            const container = document.querySelector('.auth-forms');
-            container.classList.add('loading');
-            clearMessages();
-            
-            try {
-                const response = await fetch('auth_handler.php', {
-                    method: 'POST',
-                    body: formData
-                });
+        const registerForm = document.getElementById('registerFormElement');
+        if (registerForm) {
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
                 
-                const data = await response.json();
+                const form = e.target;
+                const formData = new FormData(form);
+                formData.append('action', 'register');
                 
-                if (data.success) {
-                    showMessage('registerSuccess', data.message, true);
-                    setTimeout(() => {
-                        showOTPForm(data.email);
-                    }, 1000);
-                } else {
-                    showMessage('registerError', data.error || 'Registration failed');
+                const container = document.querySelector('.auth-forms');
+                if (container) container.classList.add('loading');
+                clearMessages();
+                
+                try {
+                    const response = await fetch('auth_handler.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showMessage('registerSuccess', data.message, true);
+                        setTimeout(() => {
+                            showOTPForm(data.email);
+                        }, 1000);
+                    } else {
+                        showMessage('registerError', data.error || 'Registration failed');
+                    }
+                } catch (error) {
+                    showMessage('registerError', 'Network error. Please try again.');
+                } finally {
+                    if (container) container.classList.remove('loading');
                 }
-            } catch (error) {
-                showMessage('registerError', 'Network error. Please try again.');
-            } finally {
-                container.classList.remove('loading');
-            }
-        });
-
-        // Handle OTP form submission
-        document.getElementById('otpFormElement').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const otp = getOTPValue();
-            if (otp.length !== 6) {
-                showMessage('otpError', 'Please enter the complete 6-digit code.');
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('action', 'verify_otp');
-            formData.append('email', currentEmail);
-            formData.append('otp', otp);
-            
-            const container = document.querySelector('.auth-forms');
-            container.classList.add('loading');
-            clearMessages();
-            
-            try {
-                const response = await fetch('auth_handler.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showMessage('otpSuccess', data.message, true);
-                    setTimeout(() => {
-                        window.location.href = data.redirect;
-                    }, 1000);
-                } else {
-                    showMessage('otpError', data.error || 'Verification failed');
-                    clearOTPInputs();
-                }
-            } catch (error) {
-                showMessage('otpError', 'Network error. Please try again.');
-            } finally {
-                container.classList.remove('loading');
-            }
-        });
-
-        // Handle OTP resend
-        async function resendOTP() {
-            const linkElement = document.getElementById('resendLink');
-            if (linkElement.classList.contains('disabled')) {
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('action', 'resend_otp');
-            formData.append('email', currentEmail);
-            
-            clearMessages();
-            
-            try {
-                const response = await fetch('auth_handler.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showMessage('otpInfo', data.message, true);
-                    clearOTPInputs();
-                    startResendTimer();
-                } else {
-                    showMessage('otpError', data.error || 'Failed to resend code');
-                }
-            } catch (error) {
-                showMessage('otpError', 'Network error. Please try again.');
-            }
+            });
         }
 
-        // Client-side password validation
-        document.getElementById('registerPassword').addEventListener('input', function() {
-            const password = this.value;
-            const confirmPassword = document.getElementById('registerConfirmPassword').value;
-            
-            if (confirmPassword && password !== confirmPassword) {
-                document.getElementById('registerConfirmPassword').setCustomValidity('Passwords do not match');
-            } else {
-                document.getElementById('registerConfirmPassword').setCustomValidity('');
-            }
-        });
+        // Handle forgot password form submission
+        const forgotPasswordForm = document.getElementById('forgotPasswordFormElement');
+        if (forgotPasswordForm) {
+            forgotPasswordForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const formData = new FormData(form);
+                formData.append('action', 'forgot_password');
+                
+                const container = document.querySelector('.auth-forms');
+                if (container) container.classList.add('loading');
+                clearMessages();
+                
+                try {
+                    const response = await fetch('auth_handler.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showMessage('forgotPasswordSuccess', data.message, true);
+                        if (data.show_reset) {
+                            setTimeout(() => {
+                                showResetPasswordForm(data.email);
+                            }, 1000);
+                        }
+                    } else {
+                        showMessage('forgotPasswordError', data.error || 'Failed to send reset code');
+                    }
+                } catch (error) {
+                    showMessage('forgotPasswordError', 'Network error. Please try again.');
+                } finally {
+                    if (container) container.classList.remove('loading');
+                }
+            });
+        }
 
-        document.getElementById('registerConfirmPassword').addEventListener('input', function() {
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = this.value;
+        // Handle reset password form submission
+        const resetPasswordForm = document.getElementById('resetPasswordFormElement');
+        if (resetPasswordForm) {
+            resetPasswordForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const otp = getOTPValue('.reset-otp');
+                const newPassword = document.getElementById('resetNewPassword').value;
+                const confirmPassword = document.getElementById('resetConfirmPassword').value;
+                
+                if (otp.length !== 6) {
+                    showMessage('resetPasswordError', 'Please enter the complete 6-digit reset code.');
+                    return;
+                }
+                
+                if (newPassword !== confirmPassword) {
+                    showMessage('resetPasswordError', 'Passwords do not match.');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('action', 'reset_password');
+                formData.append('email', currentEmail);
+                formData.append('otp', otp);
+                formData.append('new_password', newPassword);
+                formData.append('confirm_password', confirmPassword);
+                
+                const container = document.querySelector('.auth-forms');
+                if (container) container.classList.add('loading');
+                clearMessages();
+                
+                try {
+                    const response = await fetch('auth_handler.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showMessage('resetPasswordSuccess', data.message, true);
+                        setTimeout(() => {
+                            showLoginForm();
+                        }, 2000);
+                    } else {
+                        showMessage('resetPasswordError', data.error || 'Password reset failed');
+                        clearResetOTPInputs();
+                    }
+                } catch (error) {
+                    showMessage('resetPasswordError', 'Network error. Please try again.');
+                } finally {
+                    if (container) container.classList.remove('loading');
+                }
+            });
+        }
+
+        // Handle OTP verification form submission
+        const otpForm = document.getElementById('otpFormElement');
+        if (otpForm) {
+            otpForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const otp = getOTPValue('.verify-otp');
+                
+                if (otp.length !== 6) {
+                    showMessage('otpError', 'Please enter the complete 6-digit verification code.');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('action', 'verify_otp');
+                formData.append('email', currentEmail);
+                formData.append('otp', otp);
+                
+                const container = document.querySelector('.auth-forms');
+                if (container) container.classList.add('loading');
+                clearMessages();
+                
+                try {
+                    const response = await fetch('auth_handler.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showMessage('otpSuccess', data.message, true);
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 1000);
+                    } else {
+                        showMessage('otpError', data.error || 'OTP verification failed');
+                        clearOTPInputs();
+                    }
+                } catch (error) {
+                    showMessage('otpError', 'Network error. Please try again.');
+                } finally {
+                    if (container) container.classList.remove('loading');
+                }
+            });
+        }
+    });
+
+    // Resend OTP function
+    async function resendOTP() {
+        const linkElement = document.getElementById('resendLink');
+        if (!linkElement || linkElement.classList.contains('disabled')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('action', 'resend_otp');
+        formData.append('email', currentEmail);
+        
+        const container = document.querySelector('.auth-forms');
+        if (container) container.classList.add('loading');
+        clearMessages();
+        
+        try {
+            const response = await fetch('auth_handler.php', {
+                method: 'POST',
+                body: formData
+            });
             
-            if (password !== confirmPassword) {
-                this.setCustomValidity('Passwords do not match');
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('otpSuccess', data.message, true);
+                startResendTimer();
             } else {
-                this.setCustomValidity('');
+                showMessage('otpError', data.error || 'Failed to resend OTP');
             }
-        });
-    </script>
-</body>
-</html>
+        } catch (error) {
+            showMessage('otpError', 'Network error. Please try again.');
+        } finally {
+            if (container) container.classList.remove('loading');
+        }
+    }
+
+    // Resend reset code function
+    async function resendResetCode() {
+        const linkElement = document.getElementById('resetResendLink');
+        if (!linkElement || linkElement.classList.contains('disabled')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('action', 'resend_reset_code');
+        formData.append('email', currentEmail);
+        
+        const container = document.querySelector('.auth-forms');
+        if (container) container.classList.add('loading');
+        clearMessages();
+        
+        try {
+            const response = await fetch('auth_handler.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('resetPasswordSuccess', data.message, true);
+                startResetResendTimer();
+            } else {
+                showMessage('resetPasswordError', data.error || 'Failed to resend reset code');
+            }
+        } catch (error) {
+            showMessage('resetPasswordError', 'Network error. Please try again.');
+        } finally {
+            if (container) container.classList.remove('loading');
+        }
+    }
+</script>

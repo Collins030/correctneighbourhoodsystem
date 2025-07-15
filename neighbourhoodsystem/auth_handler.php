@@ -35,6 +35,12 @@ switch ($action) {
     case 'logout':
         handleLogout();
         break;
+    case 'forgot_password':
+        handleForgotPassword($pdo);
+        break;
+    case 'reset_password':
+        handleResetPassword($pdo);
+        break;
     default:
         http_response_code(400);
         echo json_encode(['error' => 'Invalid action']);
@@ -314,6 +320,160 @@ function handleLogin($pdo) {
     }
 }
 
+function handleForgotPassword($pdo) {
+    $email = trim($_POST['email'] ?? '');
+    
+    if (empty($email)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Email is required']);
+        return;
+    }
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Please enter a valid email address']);
+        return;
+    }
+    
+    try {
+        // Find user
+        $stmt = $pdo->prepare("
+            SELECT id, full_name, is_verified 
+            FROM users 
+            WHERE email = ? AND is_active = 1
+        ");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            // Don't reveal if email exists or not for security
+            echo json_encode([
+                'success' => true,
+                'message' => 'If an account with this email exists, you will receive a password reset code shortly.'
+            ]);
+            return;
+        }
+        
+        if (!$user['is_verified']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Please verify your email first before resetting your password.']);
+            return;
+        }
+        
+        // Generate reset OTP
+        $otp = generateOTP();
+        $otpExpiry = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+        
+        // Update user with reset OTP
+        $stmt = $pdo->prepare("
+            UPDATE users 
+            SET otp_code = ?, otp_expiry = ? 
+            WHERE id = ?
+        ");
+        $stmt->execute([$otp, $otpExpiry, $user['id']]);
+        
+        // Send reset OTP email
+        if (sendPasswordResetEmail($email, $user['full_name'], $otp)) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'If an account with this email exists, you will receive a password reset code shortly.',
+                'email' => $email,
+                'show_reset' => true
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to send reset code. Please try again.']);
+        }
+        
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to process request. Please try again.']);
+    }
+}
+
+function handleResetPassword($pdo) {
+    $email = trim($_POST['email'] ?? '');
+    $otp = trim($_POST['otp'] ?? '');
+    $newPassword = $_POST['new_password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
+    
+    if (empty($email) || empty($otp) || empty($newPassword) || empty($confirmPassword)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'All fields are required']);
+        return;
+    }
+    
+    if (strlen($newPassword) < 6) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Password must be at least 6 characters long']);
+        return;
+    }
+    
+    if ($newPassword !== $confirmPassword) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Passwords do not match']);
+        return;
+    }
+    
+    try {
+        // Find user and check OTP
+        $stmt = $pdo->prepare("
+            SELECT id, username, full_name, otp_code, otp_expiry, is_verified 
+            FROM users 
+            WHERE email = ? AND is_active = 1
+        ");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['error' => 'User not found']);
+            return;
+        }
+        
+        if (!$user['is_verified']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Please verify your email first']);
+            return;
+        }
+        
+        // Check if OTP has expired
+        if (strtotime($user['otp_expiry']) < time()) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Reset code has expired. Please request a new one.']);
+            return;
+        }
+        
+        // Verify OTP
+        if ($user['otp_code'] !== $otp) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid reset code. Please check and try again.']);
+            return;
+        }
+        
+        // Hash new password
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        
+        // Update password and clear OTP
+        $stmt = $pdo->prepare("
+            UPDATE users 
+            SET password = ?, otp_code = NULL, otp_expiry = NULL 
+            WHERE id = ?
+        ");
+        $stmt->execute([$hashedPassword, $user['id']]);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Password reset successful! You can now login with your new password.',
+            'redirect' => 'login'
+        ]);
+        
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Password reset failed. Please try again.']);
+    }
+}
+
 function handleLogout() {
     destroyUserSession();
     echo json_encode([
@@ -394,6 +554,80 @@ function sendOTPEmail($email, $fullName, $otp) {
         
     } catch (Exception $e) {
         error_log("Email sending failed: " . $mail->ErrorInfo);
+        return false;
+    }
+}
+
+function sendPasswordResetEmail($email, $fullName, $otp) {
+    $mail = new PHPMailer(true);
+    
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = SMTP_HOST;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = SMTP_USERNAME;
+        $mail->Password   = SMTP_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = SMTP_PORT;
+        
+        // Recipients
+        $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+        $mail->addAddress($email, $fullName);
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Password Reset - Neighbourhood Connect';
+        
+        $mail->Body = "
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .otp-code { background: #fff; border: 2px solid #ff6b6b; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0; }
+                .otp-number { font-size: 32px; font-weight: bold; color: #ff6b6b; letter-spacing: 5px; }
+                .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+                .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 5px; margin: 15px 0; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>🏘️ Neighbourhood Connect</h1>
+                    <p>Password Reset Request</p>
+                </div>
+                <div class='content'>
+                    <h2>Hello $fullName!</h2>
+                    <p>We received a request to reset your password for your Neighbourhood Connect account. Use the code below to reset your password:</p>
+                    
+                    <div class='otp-code'>
+                        <div class='otp-number'>$otp</div>
+                        <p><strong>This code will expire in 15 minutes</strong></p>
+                    </div>
+                    
+                    <div class='warning'>
+                        <strong>Security Notice:</strong> If you didn't request this password reset, please ignore this email and your password will remain unchanged.
+                    </div>
+                    
+                    <div class='footer'>
+                        <p>Best regards,<br>The Neighbourhood Connect Team</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+        
+        $mail->AltBody = "Hello $fullName!\n\nWe received a request to reset your password for your Neighbourhood Connect account. Your reset code is: $otp\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this password reset, please ignore this email.\n\nBest regards,\nThe Neighbourhood Connect Team";
+        
+        $mail->send();
+        return true;
+        
+    } catch (Exception $e) {
+        error_log("Password reset email sending failed: " . $mail->ErrorInfo);
         return false;
     }
 }
